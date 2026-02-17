@@ -121,36 +121,47 @@ class CurrencyConverter {
    * @returns {Object} Objeto con todas las conversiones
    */
   convert(sourceCurrency, amount) {
+    console.log('Converter.convert() llamado:', { sourceCurrency, amount, rates: this.rates });
+    
     if (!this.hasRates()) {
       throw new Error('No hay tasas de cambio disponibles');
     }
 
     if (!isValidNumber(amount) || amount <= 0) {
+      console.log('Converter: Monto inválido o <= 0, retornando conversión vacía');
       return this._emptyConversion();
     }
 
+    let result;
+    
     switch (sourceCurrency) {
       case CURRENCIES.PEN.code:
-        return {
+        result = {
           PEN: amount,
           ...this.convertFromPEN(amount),
         };
+        break;
 
       case CURRENCIES.USD.code:
-        return {
+        result = {
           USD: amount,
           ...this.convertFromUSD(amount),
         };
+        break;
 
       case CURRENCIES.ARS.code:
-        return {
+        result = {
           ARS: amount,
           ...this.convertFromARS(amount),
         };
+        break;
 
       default:
         throw new Error(`Moneda no soportada: ${sourceCurrency}`);
     }
+    
+    console.log('Converter: Resultado calculado:', result);
+    return result;
   }
 
   /**

@@ -4,6 +4,73 @@ Historial de cambios significativos del proyecto.
 
 ---
 
+## [2.1.0] - 2026-02-16
+
+### Alineación con Filosofía Offline-First Estricta
+
+#### Cambiado
+
+- **Estrategia de Carga**: Migrado de cache-first a **network-first estricto**
+  - `loadExchangeRates()` ahora SIEMPRE intenta APIs primero
+  - Eliminado check de `!forceRefresh` que priorizaba caché
+  - Cache usado solo como fallback cuando red falla
+  - Resultado: Datos más frescos, transparencia total
+
+- **Documentación de Filosofía**:
+  - README.md actualizado con sección "🎯 Filosofía: Offline-First con Datos Reales"
+  - ARCHITECTURE.md refleja network-first strategy con diagramas de flujo
+  - Nuevo documento: `PHILOSOPHY.md` (filosofía completa explicada)
+  - Nuevo documento: `VERIFICATION-CHECKLIST.md` (tests funcionales)
+
+- **Mensajes de Error Mejorados**:
+  - Modo offline ahora dice: "Usando último tipo de cambio **real** guardado"
+  - Primera vez sin conexión: "Conéctate a internet para obtener tipos de cambio **reales**"
+  - Énfasis en que NUNCA usa valores inventados
+
+- **Logs de Debugging**:
+  - "App: Intentando obtener tipos de cambio desde APIs..." (siempre se ejecuta)
+  - "App: Usando datos offline (último tipo de cambio real)" (fallback)
+  - "App: Sin datos disponibles - Primera vez sin conexión" (bloqueo)
+
+#### Principios Reforzados
+
+1. **Network-First**: Red siempre tiene prioridad sobre caché
+2. **Datos Reales Siempre**: NUNCA valores hardcodeados o inventados
+3. **Transparencia Total**: Estado online/offline/sin datos claramente indicado
+4. **Fallback Garantizado**: Cache solo para último valor real guardado
+5. **Primera Vez Online**: Requiere conexión inicial (no asume)
+
+#### Añadido
+
+- `PHILOSOPHY.md` - Documento extenso explicando:
+  - Principio fundamental: Datos reales siempre
+  - Flujo de obtención de datos (diagrama)
+  - Casos de uso con ejemplos
+  - Indicadores visuales (badges)
+  - Principios SOLID aplicados
+  
+- `VERIFICATION-CHECKLIST.md` - 5 tests funcionales paso a paso:
+  - Test 1: Primera carga con conexión
+  - Test 2: Segunda carga con conexión (verifica network-first)
+  - Test 3: Uso offline con datos guardados
+  - Test 4: Primera vez sin conexión (verifica no inventa datos)
+  - Test 5: Recuperación de conexión
+  - Matriz de resultados + Red flags
+
+#### Técnico
+
+- `main.js` líneas 105-165: Reescrita función `loadExchangeRates()`
+  - Eliminado bloque `if (!forceRefresh) { loadFromCache() }`
+  - Ahora `try { fetchAllRates() } catch { loadFromCache() }`
+  - Comments explican estrategia: "Network-First", "NUNCA valores inventados"
+
+- `main.js` líneas 167-194: Mejorada función `_handleLoadError()`
+  - Caso 1: cached exists → setOffline() + mensaje "último tipo de cambio real"
+  - Caso 2: no cached → setError() + mensaje "conéctate a internet"
+  - Logs detallados en cada caso
+
+---
+
 ## [2.0.0] - 2026-02-16
 
 ### Refactorización Mayor - Arquitectura Profesional

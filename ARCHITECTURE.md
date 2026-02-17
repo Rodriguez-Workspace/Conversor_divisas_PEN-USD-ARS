@@ -225,48 +225,84 @@ convertFromPEN(amount) {
 
 ## Manejo de Errores
 
+### Filosofía: Network-First con Fallback Garantizado
+
+La aplicación prioriza **siempre datos reales y actualizados**, con fallback a datos reales previamente guardados:
+
+```
+┌─────────────────────────────────────────┐
+│  1. Network-First                        │
+│     └─ Intenta APIs SIEMPRE             │
+│        (incluso en carga inicial)        │
+└─────────────────────────────────────────┘
+           │
+           ├─ ✅ Éxito
+           │   └─ Guardar en IndexedDB → Modo Online
+           │
+           └─ ❌ Fallo
+               └─ Buscar en IndexedDB
+                   ├─ ✅ Existe caché → Modo Offline (datos reales guardados)
+                   └─ ❌ No existe → Bloqueo con mensaje (NUNCA datos inventados)
+```
+
+**Principios clave**:
+- **Datos Reales Siempre**: NUNCA usa valores hardcodeados o inventados
+- **Transparencia Total**: Indica claramente si datos son en tiempo real u offline
+- **Primera Vez Online**: Requiere conexión inicial para obtener primer tipo de cambio real
+
 ### Estrategia de Fallbacks
 
 #### API Service - Múltiples intentos
 
 ```javascript
 async fetchSunatRate() {
-  // Intento 1: Netlify Function (preferido)
+  // Intento 1: Netlify Function (preferido - evita CORS)
   try {
     return await fetch('/.netlify/functions/sunat');
   } catch (error) {
     console.warn('Netlify falló, intentando API directa');
   }
 
-  // Intento 2: API directa (puede fallar por CORS)
+  // Intento 2: API directa (puede fallar por CORS en algunos navegadores)
   try {
     return await fetch('https://api.apis.net.pe/...');
   } catch (error) {
     console.error('API directa bloqueada');
   }
 
-  // Fallo total
+  // Fallo total - propagar error (NO retornar valores falsos)
   throw new Error('No se pudo obtener tasa de SUNAT');
 }
 ```
 
-#### App - Graceful Degradation
+#### App - Network-First con Graceful Degradation
 
 ```javascript
 async loadExchangeRates() {
   try {
-    // Intento obtener datos frescos
+    // SIEMPRE intenta obtener datos frescos desde APIs
     const data = await apiService.fetchAllRates();
+    
+    // Validar datos reales
+    if (!apiService.validateSunatData(data[0])) {
+      throw new Error('Datos inválidos');
+    }
+    
+    // Guardar para uso offline
+    await storageService.saveRates(data);
     stateManager.setOnline(data);
+    
   } catch (error) {
-    // Fallback a caché
+    // Fallback: Último tipo de cambio REAL guardado
     const cached = await storageService.loadRates();
+    
     if (cached) {
+      // Modo offline con datos reales previos
       stateManager.setOffline(cached);
-      stateManager.setError('Sin conexión. Usando datos guardados.');
+      stateManager.setError('Sin conexión. Usando último tipo de cambio real guardado.');
     } else {
-      // Modo degradado: sin datos
-      stateManager.setError('Sin datos disponibles');
+      // Primera vez sin conexión: Bloquear
+      stateManager.setError('No hay conexión y no existe un tipo de cambio guardado previamente. Por favor, conéctate a internet para obtener los tipos de cambio reales.');
     }
   }
 }

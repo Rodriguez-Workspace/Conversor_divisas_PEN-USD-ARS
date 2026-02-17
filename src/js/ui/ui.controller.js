@@ -75,9 +75,16 @@ class UIController {
    * @private
    */
   _handleInput(currency) {
+    // Si está convirtiendo, ignorar input (prevenir loops)
+    if (this.isConverting) {
+      console.log('UIController: Input ignorado, conversión en curso');
+      return;
+    }
+    
     clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
-      if (this.inputCallbacks.onInput) {
+      if (!this.isConverting && this.inputCallbacks.onInput) {
+        console.log('UIController: Llamando onInput callback para', currency);
         this.inputCallbacks.onInput(currency);
       }
     }, APP_CONFIG.debounceDelay);
@@ -90,7 +97,9 @@ class UIController {
    */
   getInputValue(currency) {
     const input = this._getInputElement(currency);
-    return parseInputValue(input.value);
+    const value = parseInputValue(input.value);
+    console.log(`UIController.getInputValue(${currency}):`, value);
+    return value;
   }
 
   /**
@@ -100,10 +109,10 @@ class UIController {
    * @param {number} decimals - Cantidad de decimales
    */
   setInputValue(currency, value, decimals = 2) {
-    if (this.isConverting) return; // Prevenir loops
-
     const input = this._getInputElement(currency);
-    input.value = value > 0 ? value.toFixed(decimals) : '';
+    const formattedValue = value > 0 ? value.toFixed(decimals) : '';
+    console.log(`UIController.setInputValue(${currency}):`, formattedValue, `[isConverting=${this.isConverting}]`);
+    input.value = formattedValue;
   }
 
   /**

@@ -7,16 +7,29 @@
 
 ---
 
+## 🎯 Filosofía: Offline-First con Datos Reales
+
+Esta aplicación sigue una filosofía estricta de **confiabilidad y transparencia**:
+
+- **Network-First para Datos Dinámicos**: Siempre intenta obtener tipos de cambio actualizados desde APIs oficiales
+- **Datos Reales Siempre**: NUNCA usa valores inventados o hardcodeados - solo tipos de cambio reales
+- **Fallback Garantizado**: Si falla la red, usa el último tipo de cambio real guardado localmente
+- **Persistencia Confiable**: IndexedDB guarda automáticamente cada respuesta exitosa
+- **Estado Claro**: Indica explícitamente si estás viendo datos en tiempo real o modo offline
+- **Primera Vez Online**: Si no hay datos guardados y no hay conexión, te pide conectarte (no bloquea con valores falsos)
+
+---
+
 ## Características
 
-- Conversión multidireccional en tiempo real entre 3 divisas
-- Instalable en Android/iOS como aplicación nativa
-- Persistencia offline con IndexedDB
-- Service Worker con estrategias de cache inteligentes
-- Arquitectura modular escalable con ES6 modules
-- Tema claro/oscuro automático
-- Diseño responsive mobile-first
-- Serverless backend (Netlify Functions) para bypass de CORS
+- **Conversión Multidireccional**: Tiempo real entre 3 divisas (PEN ⇄ USD ⇄ ARS)
+- **PWA Instalable**: Funciona como app nativa en Android/iOS/Desktop
+- **Modo Offline Inteligente**: Usa último tipo de cambio real cuando no hay conexión
+- **Arquitectura Modular**: ES6 modules con separación clara de responsabilidades
+- **Service Worker**: Cache-first para assets, network-first para datos dinámicos
+- **Tema Adaptativo**: Claro/oscuro automático según preferencias del sistema
+- **Mobile-First**: Diseño responsive optimizado para móviles
+- **Serverless Backend**: Netlify Functions para proxy CORS (sin servidor propio)
 
 ---
 

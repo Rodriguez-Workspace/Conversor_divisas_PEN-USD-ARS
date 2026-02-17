@@ -103,30 +103,19 @@ class App {
 
   /**
    * Carga las tasas de cambio
+   * Estrategia: Network-First con fallback a datos guardados
+   * NUNCA usa valores inventados, solo datos reales de APIs
    * @param {boolean} forceRefresh - Forzar actualización desde APIs
    */
   async loadExchangeRates(forceRefresh = false) {
     stateManager.setLoading();
 
     try {
-      // Intento 1: Cargar desde caché si no es refresh forzado
-      if (!forceRefresh) {
-        const cached = await storageService.loadRates();
-        if (cached) {
-          const rates = {
-            penToUsd: cached.penToUsd,
-            usdToArs: cached.usdToArs,
-          };
-          converter.setRates(rates);
-          stateManager.setOffline(rates, cached.timestamp);
-          return;
-        }
-      }
-
-      // Intento 2: Fetch desde APIs
+      // Estrategia NETWORK-FIRST: Siempre intenta obtener datos frescos
+      console.log('App: Intentando obtener tipos de cambio desde APIs...');
       const [sunatData, dolarApiData] = await apiService.fetchAllRates();
 
-      // Validar datos
+      // Validar datos recibidos
       if (!apiService.validateSunatData(sunatData)) {
         throw new Error('Datos de SUNAT inválidos');
       }
@@ -134,50 +123,65 @@ class App {
         throw new Error('Datos de DolarAPI inválidos');
       }
 
-      // Calcular tasas
+      // Calcular tasas desde datos REALES
       const rates = {
         penToUsd: converter.constructor.calculateSunatRate(sunatData),
         usdToArs: converter.constructor.calculateDolarBlueRate(dolarApiData),
       };
 
+      console.log('App: Tasas obtenidas exitosamente desde APIs:', rates);
+
       // Actualizar conversor
       converter.setRates(rates);
 
-      // Guardar en caché
+      // PERSISTENCIA: Guardar en IndexedDB para uso offline
       const sunatDate = sunatData.fecha || new Date().toISOString();
       const blueDate = dolarApiData.fechaActualizacion || new Date().toISOString();
       await storageService.saveRates(rates, sunatDate, blueDate);
 
-      // Actualizar estado
+      // Actualizar estado: ONLINE con datos en tiempo real
       const timestamp = new Date().toISOString();
       stateManager.setOnline(rates, timestamp);
+      
+      console.log('App: Tipos de cambio actualizados y guardados');
     } catch (error) {
-      console.error('App: Error al cargar tasas', error);
+      // FALLBACK: Si falla la red, usar último tipo de cambio REAL guardado
+      console.warn('App: Error al obtener datos desde APIs, usando caché...', error.message);
       await this._handleLoadError();
     }
   }
 
   /**
    * Maneja errores al cargar tasas
+   * Fallback: Usa último tipo de cambio REAL guardado (NUNCA valores inventados)
    * @private
    */
   async _handleLoadError() {
-    // Intentar usar datos de caché
+    // Intentar recuperar último tipo de cambio REAL guardado
     const cached = await storageService.loadRates();
+    
     if (cached) {
+      // HAY DATOS REALES GUARDADOS: Modo offline
       const rates = {
         penToUsd: cached.penToUsd,
         usdToArs: cached.usdToArs,
       };
+      
       converter.setRates(rates);
       stateManager.setOffline(rates, cached.timestamp);
-      stateManager.setError('Sin conexión. Usando último tipo de cambio guardado.');
+      stateManager.setError(
+        'Sin conexión. Usando último tipo de cambio real guardado.'
+      );
+      
+      console.log('App: Usando datos offline (último tipo de cambio real):', rates);
     } else {
-      // No hay datos disponibles
+      // NO HAY DATOS GUARDADOS: Bloquear conversión
       converter.clearRates();
       stateManager.setError(
-        'No hay conexión y no existe un tipo de cambio guardado previamente. Por favor, conéctate a internet.'
+        'No hay conexión y no existe un tipo de cambio guardado previamente. Por favor, conéctate a internet para obtener los tipos de cambio reales.'
       );
+      
+      console.error('App: Sin datos disponibles - Primera vez sin conexión');
     }
   }
 
@@ -185,16 +189,21 @@ class App {
    * Maneja la conversión de divisas
    * @param {string} sourceCurrency - Moneda origen
    */
-  async handleConversion(sourceCurrency) {
+  handleConversion(sourceCurrency) {
+    console.log('App.handleConversion llamado con:', sourceCurrency);
+    
     if (!converter.hasRates()) {
+      console.error('App: No hay tasas disponibles');
       stateManager.setError('Tipos de cambio no disponibles. Por favor, actualiza.');
       return;
     }
 
     const amount = uiController.getInputValue(sourceCurrency);
+    console.log('App: Monto obtenido:', amount, 'de', sourceCurrency);
 
     // Si el campo está vacío, limpiar los demás
     if (amount === 0) {
+      console.log('App: Monto es 0, limpiando inputs');
       uiController.clearInputs();
       return;
     }
@@ -202,20 +211,25 @@ class App {
     try {
       // Realizar conversión
       const result = converter.convert(sourceCurrency, amount);
+      console.log('App: Resultado de conversión:', result);
 
       // Actualizar UI sin loops
-      await uiController.withoutLoops(async () => {
-        if (result.PEN !== undefined && sourceCurrency !== 'PEN') {
-          uiController.setInputValue('PEN', result.PEN);
-        }
-        if (result.USD !== undefined && sourceCurrency !== 'USD') {
-          uiController.setInputValue('USD', result.USD);
-        }
-        if (result.ARS !== undefined && sourceCurrency !== 'ARS') {
-          uiController.setInputValue('ARS', result.ARS);
-        }
-      });
+      uiController.isConverting = true;
+      
+      if (result.PEN !== undefined && sourceCurrency !== 'PEN') {
+        uiController.setInputValue('PEN', result.PEN);
+      }
+      if (result.USD !== undefined && sourceCurrency !== 'USD') {
+        uiController.setInputValue('USD', result.USD);
+      }
+      if (result.ARS !== undefined && sourceCurrency !== 'ARS') {
+        uiController.setInputValue('ARS', result.ARS);
+      }
+      
+      uiController.isConverting = false;
+      console.log('App: Inputs actualizados correctamente');
     } catch (error) {
+      uiController.isConverting = false;
       console.error('App: Error en conversión', error);
       stateManager.setError('Error en la conversión');
     }
