@@ -1,5 +1,10 @@
 # Node modules (si se usa Node.js para desarrollo)
 node_modules/
+package-lock.json
+yarn.lock
+
+# Netlify
+.netlify/
 
 # Logs
 *.log

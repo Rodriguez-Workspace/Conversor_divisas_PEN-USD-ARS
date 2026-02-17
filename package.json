@@ -1,0 +1,21 @@
+{
+  "name": "conversor-multidivisa-pwa",
+  "version": "2.0.0",
+  "description": "Progressive Web App para conversión de divisas PEN, USD, ARS",
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server -p 8000 -c-1",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pwa",
+    "currency",
+    "converter",
+    "netlify",
+    "serverless"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}

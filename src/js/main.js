@@ -94,7 +94,7 @@ class App {
     if (!('serviceWorker' in navigator)) return;
 
     try {
-      await navigator.serviceWorker.register('/src/sw.js');
+      await navigator.serviceWorker.register('/sw.js');
       console.log('App: Service Worker registrado');
     } catch (error) {
       console.warn('App: Error al registrar Service Worker', error);

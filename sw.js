@@ -2,9 +2,35 @@
  * Service Worker
  * Gestiona el cache de recursos estáticos y estrategias de red
  * Versión: 9.0.0
+ * 
+ * NOTA: Los Service Workers NO soportan ES6 imports
+ * Por eso las configuraciones están inline
  */
 
-import { CACHE_CONFIG } from './js/config/constants.js';
+// Configuración de cache
+const CACHE_NAME = 'conversor-v9';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/src/css/styles.css',
+  '/src/js/main.js',
+  '/src/js/config/constants.js',
+  '/src/js/services/api.service.js',
+  '/src/js/services/storage.service.js',
+  '/src/js/core/converter.js',
+  '/src/js/core/state-manager.js',
+  '/src/js/ui/ui.controller.js',
+  '/src/js/utils/formatters.js',
+  '/manifest.json',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-152x152.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-384x384.png',
+  '/icons/icon-512x512.png',
+];
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
@@ -12,10 +38,10 @@ self.addEventListener('install', (event) => {
 
   event.waitUntil(
     caches
-      .open(CACHE_CONFIG.name)
+      .open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: Cacheando archivos estáticos');
-        return cache.addAll(CACHE_CONFIG.assets);
+        return cache.addAll(ASSETS_TO_CACHE);
       })
       .then(() => self.skipWaiting())
       .catch((error) => {
@@ -34,7 +60,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cache) => {
-            if (cache !== CACHE_CONFIG.name) {
+            if (cache !== CACHE_NAME) {
               console.log('Service Worker: Eliminando caché antigua:', cache);
               return caches.delete(cache);
             }
@@ -71,7 +97,7 @@ self.addEventListener('fetch', (event) => {
  */
 async function cacheFirst(request) {
   try {
-    const cache = await caches.open(CACHE_CONFIG.name);
+    const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(request);
 
     if (cached) {
@@ -91,7 +117,7 @@ async function cacheFirst(request) {
     console.error('Service Worker: Error en cacheFirst', error);
 
     // Fallback a caché si falla la red
-    const cache = await caches.open(CACHE_CONFIG.name);
+    const cache = await caches.open(CACHE_NAME);
     return cache.match('/index.html');
   }
 }
@@ -114,7 +140,7 @@ async function networkFirstWithTimeout(request, timeout = 5000) {
 
     // Cachear respuesta exitosa de API
     if (response.status === 200) {
-      const cache = await caches.open(CACHE_CONFIG.name);
+      const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
     }
 
@@ -123,7 +149,7 @@ async function networkFirstWithTimeout(request, timeout = 5000) {
     console.warn('Service Worker: Red falló, intentando caché', error.message);
 
     // Fallback a caché
-    const cache = await caches.open(CACHE_CONFIG.name);
+    const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(request);
 
     if (cached) {
@@ -174,16 +200,11 @@ self.addEventListener('message', (event) => {
       })
     );
   }
-});
 
-/**
- * Notificación de nueva versión disponible
- */
-self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'GET_VERSION') {
     event.ports[0].postMessage({
       version: '9.0.0',
-      cacheName: CACHE_CONFIG.name,
+      cacheName: CACHE_NAME,
     });
   }
 });
