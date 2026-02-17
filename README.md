@@ -1,199 +1,421 @@
-# 💱 Conversor Multi-Divisa PWA
+# Conversor Multi-Divisa PWA
 
-Aplicación web progresiva (PWA) para conversión en tiempo real entre Soles Peruanos (PEN), Dólares Americanos (USD) y Pesos Argentinos (ARS - dólar blue).
+> **Progressive Web App** profesional para conversión en tiempo real entre **PEN** (Soles Peruanos), **USD** (Dólares Estadounidenses) y **ARS** (Pesos Argentinos - cotización blue).
 
-## 🚀 Características
-
-- ✅ Conversión multidireccional en tiempo real
-- ✅ Interfaz mobile-first con tema oscuro
-- ✅ Instalable como app nativa en Android
-- ✅ Funciona offline con Service Worker
-- ✅ Cache inteligente de tipos de cambio
-- ✅ Datos actualizados de SUNAT y DolarAPI
-
-## 📦 Instalación
-
-### Opción 1: Servidor Local
-
-1. Abre una terminal en la carpeta del proyecto
-2. Ejecuta un servidor HTTP local:
-
-**Con Python 3:**
-```bash
-python -m http.server 8000
-```
-
-**Con Node.js (npx):**
-```bash
-npx http-server -p 8000
-```
-
-**Con PHP:**
-```bash
-php -S localhost:8000
-```
-
-3. Abre tu navegador en `http://localhost:8000`
-
-### Opción 2: Publicar en Hosting
-
-Puedes publicar todos los archivos en cualquier hosting web (GitHub Pages, Netlify, Vercel, etc.)
-
-## 📱 Instalación en Android
-
-1. Abre la aplicación en Chrome para Android
-2. Toca el menú (⋮) y selecciona "Agregar a pantalla de inicio" o "Instalar app"
-3. La aplicación se instalará como una app nativa
-
-## 🎨 Generar Iconos
-
-Los iconos PWA deben estar en la carpeta `icons/`. Para generarlos:
-
-1. Abre `generate-icons.html` en tu navegador
-2. Haz clic en "Generar Iconos"
-3. Se descargarán automáticamente todos los tamaños necesarios
-4. Mueve los archivos `.png` descargados a la carpeta `icons/`
-
-Tamaños necesarios:
-- icon-72x72.png
-- icon-96x96.png
-- icon-128x128.png
-- icon-144x144.png
-- icon-152x152.png
-- icon-192x192.png
-- icon-384x384.png
-- icon-512x512.png
-
-## 🔧 Estructura del Proyecto
-
-```
-cambio2/
-├── index.html          # Estructura principal
-├── styles.css          # Estilos tema oscuro
-├── app.js              # Lógica de conversión
-├── manifest.json       # Configuración PWA
-├── sw.js               # Service Worker
-├── generate-icons.html # Generador de iconos
-├── icons/              # Iconos PWA (generados)
-│   ├── icon-72x72.png
-│   ├── icon-96x96.png
-│   ├── icon-128x128.png
-│   ├── icon-144x144.png
-│   ├── icon-152x152.png
-│   ├── icon-192x192.png
-│   ├── icon-384x384.png
-│   └── icon-512x512.png
-└── README.md           # Este archivo
-```
-
-## 🌐 APIs Utilizadas
-
-### SUNAT (PEN ⇄ USD)
-- **Endpoint:** `https://api.apis.net.pe/v1/tipo-cambio-sunat`
-- **Cálculo:** Promedio de compra y venta
-
-### DolarAPI (USD ⇄ ARS)
-- **Endpoint:** `https://dolarapi.com/v1/dolares/blue`
-- **Valor:** Máximo entre compra y venta (dólar blue)
-
-## 🧠 Lógica de Conversión
-
-La aplicación usa USD como moneda base intermedia:
-
-- **PEN → USD → ARS**
-- **ARS → USD → PEN**
-- **USD → PEN y ARS** (directo)
-
-### Fórmulas
-
-```javascript
-// PEN a USD
-USD = PEN / promedioSUNAT
-
-// USD a PEN
-PEN = USD * promedioSUNAT
-
-// USD a ARS
-ARS = USD * tipoBlue
-
-// ARS a USD
-USD = ARS / tipoBlue
-```
-
-## 💾 Almacenamiento
-
-- **localStorage:** Cache de tipos de cambio (válido por 24 horas)
-- **Service Worker Cache:** Archivos estáticos para funcionamiento offline
-
-## 🎯 Resumen de Tasas
-
-En la parte inferior se muestra el formato obligatorio:
-
-```
-🇵🇪 X PEN  |  🇺🇸 1 USD  |  🇦🇷 Y ARS
-```
-
-Donde:
-- **X** = 1 USD en soles (promedio SUNAT)
-- **Y** = 1 USD en pesos argentinos (dólar blue)
-
-## 🔄 Actualización
-
-- **Automática:** Al cargar la página (si no hay cache o es antiguo)
-- **Manual:** Botón de actualización (🔄)
-- **Cache:** 24 horas de validez
-
-## 📱 Requisitos del Navegador
-
-- Service Workers
-- LocalStorage
-- Fetch API
-- ES6+ JavaScript
-
-Compatible con:
-- ✅ Chrome/Edge (Android, Windows, Mac)
-- ✅ Firefox
-- ✅ Safari (iOS 11.3+)
-
-## 🛠️ Desarrollo
-
-La aplicación usa únicamente:
-- HTML5
-- CSS3 (Custom Properties, Flexbox, Grid)
-- Vanilla JavaScript (ES6+)
-- Service Worker API
-- Web App Manifest
-
-**Sin frameworks ni librerías externas.**
-
-## 📝 Notas
-
-- Los tipos de cambio se actualizan según disponibilidad de las APIs
-- El dólar blue argentino puede variar significativamente del oficial
-- La aplicación funciona offline usando el último tipo de cambio guardado
-- El debounce de 500ms evita conversiones excesivas mientras se escribe
-
-## 🐛 Solución de Problemas
-
-### La app no se instala en Android
-- Verifica que estés usando HTTPS o localhost
-- Asegúrate de que manifest.json esté correctamente vinculado
-- Comprueba que los iconos existan en la carpeta `icons/`
-
-### No se actualizan los tipos de cambio
-- Verifica tu conexión a internet
-- Las APIs pueden tener límites de tasa
-- Revisa la consola del navegador para errores
-
-### Errores en Service Worker
-- Limpia el caché del navegador
-- Desregistra el Service Worker antiguo en DevTools
-- Verifica que las rutas de los archivos sean correctas
-
-## 📄 Licencia
-
-Este proyecto es de código abierto y está disponible para uso personal y comercial.
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ---
 
-Desarrollado con ❤️ usando tecnologías web estándar.
+## Características
+
+- Conversión multidireccional en tiempo real entre 3 divisas
+- Instalable en Android/iOS como aplicación nativa
+- Persistencia offline con IndexedDB
+- Service Worker con estrategias de cache inteligentes
+- Arquitectura modular escalable con ES6 modules
+- Tema claro/oscuro automático
+- Diseño responsive mobile-first
+- Serverless backend (Netlify Functions) para bypass de CORS
+
+---
+
+## Arquitectura
+
+Este proyecto sigue una **arquitectura limpia y modular** diseñada para ser mantenible y escalable:
+
+### Estructura de Carpetas
+
+```
+/
+├── index.html                    # Punto de entrada HTML
+├── manifest.json                 # Configuración PWA
+├── netlify.toml                  # Config deployment Netlify
+├── .gitignore
+├── README.md
+│
+├── icons/                        # Iconos PWA (8 tamaños)
+│   ├── icon-72x72.png
+│   ├── icon-96x96.png
+│   └── ...
+│
+├── netlify/                      # Serverless Functions
+│   └── functions/
+│       └── sunat.js              # Proxy CORS para API SUNAT
+│
+└── src/                          # Código fuente modular
+    ├── css/
+    │   └── styles.css            # Estilos globales
+    │
+    ├── sw.js                     # Service Worker (PWA)
+    │
+    └── js/
+        ├── main.js               # Entry point de la aplicación
+        │
+        ├── config/               # Configuración global
+        │   └── constants.js
+        │
+        ├── services/             # Capa de servicios
+        │   ├── api.service.js    # Comunicación con APIs
+        │   └── storage.service.js # Persistencia IndexedDB
+        │
+        ├── core/                 # Lógica de negocio
+        │   ├── converter.js      # Conversión de divisas
+        │   └── state-manager.js  # Gestión de estado
+        │
+        ├── ui/                   # Controlador de interfaz
+        │   └── ui.controller.js  # Manipulación DOM y eventos
+        │
+        └── utils/                # Utilidades
+            └── formatters.js     # Formateo de números y fechas
+```
+
+### Separación de Responsabilidades
+
+#### 1. **Config Layer** (`config/`)
+- Centraliza toda la configuración de la app
+- Constantes de APIs, base de datos, cache
+- Sin lógica, solo datos de configuración
+
+#### 2. **Services Layer** (`services/`)
+- **API Service**: Encapsula todas las llamadas HTTP
+- **Storage Service**: Gestiona IndexedDB (CRUD)
+- Lógica de comunicación externa
+- Retries, fallbacks, validación de respuestas
+
+#### 3. **Core Layer** (`core/`)
+- **Converter**: Lógica pura de conversión (NO depende de DOM/APIs)
+- **State Manager**: Patrón Observer para estado reactivo
+- Reglas de negocio desacopladas
+- Testeable de forma aislada
+
+#### 4. **UI Layer** (`ui/`)
+- **UI Controller**: Único módulo que toca el DOM
+- Event listeners y renderizado
+- Delega lógica a Core Layer
+- Presenta datos, no calcula
+
+#### 5. **Utils Layer** (`utils/`)
+- Funciones puras reutilizables
+- Formateo, validación, parseo
+- Sin efectos secundarios
+
+---
+
+## Flujo de Datos
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                         Usuario                          │
+└────────────────┬────────────────────────────────────────┘
+                 │ (Input)
+                 ▼
+┌──────────────────────────────────────────────────────────┐
+│                    UI Controller                          │
+│  • Captura eventos                                        │
+│  • Renderiza estado                                       │
+└────────────┬──────────────────────┬──────────────────────┘
+             │                       │
+             │ (Delega)              │ (Lee)
+             ▼                       ▼
+┌──────────────────────┐    ┌───────────────────────┐
+│    State Manager     │    │      Converter         │
+│  • Estado global     │◄───│  • Lógica conversión   │
+│  • Notifica cambios  │    │  • Cálculos puros      │
+└──────────┬───────────┘    └───────────────────────┘
+           │                         ▲
+           │ (Suscribe)              │ (Obtiene tasas)
+           ▼                         │
+┌──────────────────────────────────┬──────────────────┐
+│         Services Layer            │                  │
+├──────────────────────────────────┼──────────────────┤
+│      API Service                  │ Storage Service  │
+│  • Fetch APIs externas            │ • IndexedDB      │
+│  • Netlify Functions              │ • Cache local    │
+│  • Fallbacks y retries            │ • Persistencia   │
+└───────────────────────────────────┴──────────────────┘
+```
+
+### Flujo típico de conversión:
+
+1. Usuario ingresa monto en input (ej: 100 USD)
+2. **UI Controller** captura evento con debounce (300ms)
+3. **UI Controller** llama a `converter.convert('USD', 100)`
+4. **Converter** aplica fórmulas matemáticas (lógica pura)
+5. **Converter** retorna `{ PEN: 370, USD: 100, ARS: 96000 }`
+6. **UI Controller** actualiza inputs con resultados
+7. **State Manager** notifica a suscriptores si hay cambios
+
+### Flujo de actualización de tasas:
+
+1. Usuario presiona botón refresh (o carga inicial)
+2. `App.loadExchangeRates()` se ejecuta
+3. **State Manager** pasa a estado `LOADING`
+4. **API Service** hace fetch paralelo a SUNAT y DolarAPI
+5. **Converter** calcula tasas promedio
+6. **Storage Service** guarda en IndexedDB
+7. **State Manager** pasa a estado `ONLINE`
+8. **UI Controller** renderiza nueva UI
+
+---
+
+## APIs Utilizadas
+
+### 1. **SUNAT API** (PEN/USD)
+- **Endpoint**: `https://api.apis.net.pe/v1/tipo-cambio-sunat`
+- **Problema**: CORS bloqueado desde frontend
+- **Solución**: Netlify Function proxy serverless
+- **Ruta proxy**: `/.netlify/functions/sunat`
+- **Estrategia**: Primary → Netlify Function, Fallback → API directa
+
+### 2. **DolarAPI** (USD/ARS Blue)
+- **Endpoint**: `https://dolarapi.com/v1/dolares/blue`
+- **Sin problemas de CORS**
+- **Estrategia**: Primary → API directa, Fallback → Proxy CORS público
+
+---
+
+## Tecnologías
+
+### Frontend
+- **HTML5** - Estructura semántica
+- **CSS3** - Custom properties, Grid, Flexbox
+- **JavaScript ES6+** - Modules nativas, async/await
+- **IndexedDB** - Persistencia offline
+
+### PWA
+- **Service Worker** - Cache estratégico
+- **Web App Manifest** - Instalación nativa
+- **Cache API** - Offline-first
+
+### Backend Serverless
+- **Netlify Functions** - Node.js serverless
+- **Proxy CORS** - Bypass de políticas restrictivas
+
+---
+
+## Decisiones Técnicas
+
+### ¿Por qué ES6 Modules en lugar de bundler?
+
+- **Simplicidad**: No requiere build step
+- **Nativo**: Los navegadores modernos lo soportan
+- **HTTP/2**: Multiplexing hace que múltiples archivos no sean problema
+- **Dev Experience**: Hot reload instantáneo sin compilación
+
+### ¿Por qué IndexedDB en lugar de LocalStorage?
+
+- **Capacidad**: LocalStorage tiene límite de ~5MB
+- **Asíncrono**: No bloquea el main thread
+- **Tipos complejos**: Almacena objetos directamente
+- **Transacciones**: ACID compliance
+
+### ¿Por qué patrón Observer en State Manager?
+
+- **Reactividad**: La UI se actualiza automáticamente
+- **Desacoplamiento**: State no conoce a los consumidores
+- **Escalabilidad**: Múltiples componentes pueden suscribirse
+- **Debugging**: Estado centralizado fácil de trackear
+
+### ¿Por qué Singleton en servicios?
+
+- **Estado compartido**: Una sola instancia de IndexedDB
+- **Configuración única**: APIs inicializadas una vez
+- **Performance**: No recrear conexiones
+- **Simplicidad**: No necesitamos múltiples instancias
+
+---
+
+## Modo Offline
+
+### Estrategia de Cache
+
+#### Recursos Estáticos (HTML, CSS, JS, Icons)
+- **Estrategia**: Cache First
+- **Razón**: Estos archivos no cambian entre deploys
+- **Comportamiento**: Si está en cache, se sirve inmediatamente
+
+#### APIs Externas (SUNAT, DolarAPI)
+- **Estrategia**: Network First con Timeout (5s)
+- **Razón**: Priorizar datos frescos pero tener fallback
+- **Comportamiento**:
+  1. Intenta red con timeout de 5 segundos
+  2. Si falla, usa cache
+  3. Si no hay cache, muestra error
+
+### Persistencia
+
+```javascript
+// Flujo de datos offline
+Red disponible → Fetch APIs → Cache en IndexedDB → Renderizar
+Red NO disponible → Buscar en IndexedDB → Renderizar con aviso
+Sin datos cacheados → Mostrar error → Bloquear conversión
+```
+
+---
+
+## Escalabilidad
+
+### Cómo agregar una nueva moneda (ej: EUR)
+
+1. **Agregar configuración** (`config/constants.js`):
+```javascript
+export const CURRENCIES = {
+  // ...existentes
+  EUR: {
+    code: 'EUR',
+    name: 'Euros',
+    flag: '🇪🇺',
+    decimals: 2,
+  },
+};
+```
+
+2. **Extender Converter** (`core/converter.js`):
+```javascript
+convertFromEUR(amount) {
+  // Lógica de conversión
+}
+```
+
+3. **Agregar API Service** para la nueva fuente de datos
+
+4. **Actualizar UI** con nuevo input
+
+5. **Actualizar Storage** para persistir nueva tasa
+
+### Cómo cambiar proveedor de API
+
+1. **Actualizar config** (`config/constants.js`):
+```javascript
+export const API_CONFIG = {
+  sunat: {
+    primary: 'https://nueva-api.com/endpoint',
+    fallback: 'https://backup-api.com',
+  },
+};
+```
+
+2. **Adaptar API Service** si cambia estructura de respuesta:
+```javascript
+// api.service.js
+async fetchSunatRate() {
+  const response = await fetch(API_CONFIG.sunat.primary);
+  const data = await response.json();
+  
+  // Adaptar estructura si es necesario
+  return {
+    compra: data.buy_rate,  // Mapeo de campos
+    venta: data.sell_rate,
+    fecha: data.updated_at,
+  };
+}
+```
+
+3. **Actualizar validación** si es necesario
+
+### Cómo migrar a backend propio
+
+1. **Reemplazar Netlify Function** con API REST propia
+2. **Actualizar** `API_CONFIG.sunat.primary` con tu URL
+3. **Mantener** la misma estructura de respuesta o adaptar en Service
+
+---
+
+## Instalación y Desarrollo
+
+### Requisitos
+- Navegador moderno (Chrome 90+, Firefox 88+, Safari 14+)
+- Servidor HTTP (no funciona con `file://`)
+
+### Desarrollo Local
+
+```bash
+# Opción 1: Python
+python -m http.server 8000
+
+# Opción 2: Node.js
+npx http-server -p 8000
+
+# Opción 3: VS Code
+# Instalar extensión "Live Server" y hacer click derecho > Open with Live Server
+```
+
+Visitar: `http://localhost:8000`
+
+### Deployment en Netlify
+
+1. Conectar repositorio de GitHub
+2. Configuración automática detecta `netlify.toml`
+3. Deploy automático en cada push a `main`
+
+**URL de producción**: `https://tu-app.netlify.app`
+
+---
+
+## Testing (Recomendaciones)
+
+Gracias a la arquitectura modular, puedes testear fácilmente:
+
+### Unit Tests (Ejemplo con Jest)
+
+```javascript
+// converter.test.js
+import { converter } from './core/converter.js';
+
+test('convierte correctamente desde PEN', () => {
+  converter.setRates({ penToUsd: 3.70, usdToArs: 1000 });
+  const result = converter.convertFromPEN(370);
+  
+  expect(result.USD).toBeCloseTo(100, 2);
+  expect(result.ARS).toBeCloseTo(100000, 2);
+});
+```
+
+### Integration Tests
+
+- Mockear `apiService` para probar flujo completo
+- Testear `StateManager` con observadores
+- Verificar que `UIController` renderiza correctamente
+
+---
+
+## Buenas Prácticas Aplicadas
+
+- **SOLID Principles**: 
+  - Single Responsibility en cada módulo
+  - Dependency Injection vía imports
+  - Open/Closed para extensión de monedas
+
+- **DRY**: Utilidades reutilizables en `utils/`
+
+- **Separation of Concerns**: Capas bien definidas
+
+- **Immutability**: State Manager retorna copias
+
+- **Error Handling**: Try-catch en operaciones async
+
+- **Async/Await**: Legibilidad sobre callbacks
+
+- **ES6+**: Arrow functions, destructuring, template literals
+
+- **Naming**: Nombres descriptivos y consistentes
+
+- **Comments**: JSDoc en funciones públicas
+
+- **No Magic Numbers**: Constantes con nombres claros
+
+---
+
+## Licencia
+
+MIT License - Libre para usar, modificar y distribuir.
+
+---
+
+## Contacto y Contribuciones
+
+Para mejoras o bugs, crear un issue en el repositorio.
+
+**Versión**: 2.0.0  
+**Última actualización**: Febrero 2026

@@ -1,126 +1,189 @@
-const CACHE_NAME = 'conversor-v6';
-const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
-    '/icons/icon-72x72.png',
-    '/icons/icon-96x96.png',
-    '/icons/icon-128x128.png',
-    '/icons/icon-144x144.png',
-    '/icons/icon-152x152.png',
-    '/icons/icon-192x192.png',
-    '/icons/icon-384x384.png',
-    '/icons/icon-512x512.png'
-];
+/**
+ * Service Worker
+ * Gestiona el cache de recursos estáticos y estrategias de red
+ * Versión: 9.0.0
+ */
+
+import { CACHE_CONFIG } from './js/config/constants.js';
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
-    console.log('Service Worker: Instalando...');
-    
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Service Worker: Cacheando archivos');
-                return cache.addAll(ASSETS_TO_CACHE);
-            })
-            .then(() => self.skipWaiting())
-            .catch((error) => {
-                console.error('Error al cachear archivos:', error);
-            })
-    );
+  console.log('Service Worker: Instalando v9...');
+
+  event.waitUntil(
+    caches
+      .open(CACHE_CONFIG.name)
+      .then((cache) => {
+        console.log('Service Worker: Cacheando archivos estáticos');
+        return cache.addAll(CACHE_CONFIG.assets);
+      })
+      .then(() => self.skipWaiting())
+      .catch((error) => {
+        console.error('Service Worker: Error al cachear archivos', error);
+      })
+  );
 });
 
 // Activación del Service Worker
 self.addEventListener('activate', (event) => {
-    console.log('Service Worker: Activando...');
-    
-    event.waitUntil(
-        caches.keys()
-            .then((cacheNames) => {
-                return Promise.all(
-                    cacheNames.map((cache) => {
-                        if (cache !== CACHE_NAME) {
-                            console.log('Service Worker: Eliminando caché antigua:', cache);
-                            return caches.delete(cache);
-                        }
-                    })
-                );
-            })
-            .then(() => self.clients.claim())
-    );
+  console.log('Service Worker: Activando v9...');
+
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cache) => {
+            if (cache !== CACHE_CONFIG.name) {
+              console.log('Service Worker: Eliminando caché antigua:', cache);
+              return caches.delete(cache);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
+  );
 });
 
-// Interceptar peticiones
+// Interceptar peticiones de red
 self.addEventListener('fetch', (event) => {
-    const { request } = event;
-    const url = new URL(request.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
-    // NO interceptar APIs externas - dejar que el navegador las maneje directamente
-    if (url.origin !== location.origin) {
-        return; // No hacer nada, dejar que fetch normal funcione
-    }
+  // Ignorar peticiones a chrome-extension y otros protocolos no HTTP
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
 
-    // Estrategia Cache First solo para recursos locales
+  // Estrategia basada en el origen
+  if (url.origin !== location.origin) {
+    // APIs externas: Network First con timeout
+    event.respondWith(networkFirstWithTimeout(request, 5000));
+  } else {
+    // Recursos locales: Cache First
     event.respondWith(cacheFirst(request));
+  }
 });
 
-// Estrategia Cache First
+/**
+ * Estrategia Cache First
+ * Ideal para recursos estáticos que no cambian frecuentemente
+ */
 async function cacheFirst(request) {
-    const cache = await caches.open(CACHE_NAME);
+  try {
+    const cache = await caches.open(CACHE_CONFIG.name);
     const cached = await cache.match(request);
-    
+
     if (cached) {
-        return cached;
+      return cached;
     }
 
-    try {
-        const response = await fetch(request);
-        
-        // Cachear la nueva respuesta
-        if (response.status === 200) {
-            cache.put(request, response.clone());
-        }
-        
-        return response;
-    } catch (error) {
-        console.error('Error en fetch:', error);
-        
-        // Si falla todo, devolver página offline básica
-        if (request.destination === 'document') {
-            return cache.match('/index.html');
-        }
-        
-        throw error;
+    // No está en caché, buscar en red
+    const response = await fetch(request);
+
+    // Cachear respuesta exitosa
+    if (response.status === 200) {
+      cache.put(request, response.clone());
     }
+
+    return response;
+  } catch (error) {
+    console.error('Service Worker: Error en cacheFirst', error);
+
+    // Fallback a caché si falla la red
+    const cache = await caches.open(CACHE_CONFIG.name);
+    return cache.match('/index.html');
+  }
 }
 
-// Sincronización en segundo plano (opcional)
-self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-rates') {
-        event.waitUntil(syncExchangeRates());
+/**
+ * Estrategia Network First con timeout
+ * Para APIs: prioriza datos frescos pero usa caché si falla
+ */
+async function networkFirstWithTimeout(request, timeout = 5000) {
+  try {
+    // Intentar primero con la red con timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    const response = await fetch(request, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    // Cachear respuesta exitosa de API
+    if (response.status === 200) {
+      const cache = await caches.open(CACHE_CONFIG.name);
+      cache.put(request, response.clone());
     }
+
+    return response;
+  } catch (error) {
+    console.warn('Service Worker: Red falló, intentando caché', error.message);
+
+    // Fallback a caché
+    const cache = await caches.open(CACHE_CONFIG.name);
+    const cached = await cache.match(request);
+
+    if (cached) {
+      return cached;
+    }
+
+    // No hay caché disponible
+    throw error;
+  }
+}
+
+/**
+ * Sincronización en segundo plano
+ * Para actualizar tasas cuando hay conectividad
+ */
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-rates') {
+    event.waitUntil(notifyClientsToSync());
+  }
 });
 
-async function syncExchangeRates() {
-    try {
-        // Intentar actualizar las tasas de cambio
-        const clients = await self.clients.matchAll();
-        clients.forEach(client => {
-            client.postMessage({
-                type: 'SYNC_RATES',
-                message: 'Actualizando tasas de cambio...'
-            });
-        });
-    } catch (error) {
-        console.error('Error en sincronización:', error);
-    }
+async function notifyClientsToSync() {
+  try {
+    const clients = await self.clients.matchAll();
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'SYNC_RATES',
+        message: 'Conectividad restaurada. Actualizando tasas...',
+      });
+    });
+  } catch (error) {
+    console.error('Service Worker: Error en sincronización', error);
+  }
 }
 
-// Manejo de mensajes desde el cliente
+/**
+ * Manejo de mensajes desde la aplicación
+ */
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(cacheNames.map((cache) => caches.delete(cache)));
+      })
+    );
+  }
+});
+
+/**
+ * Notificación de nueva versión disponible
+ */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({
+      version: '9.0.0',
+      cacheName: CACHE_CONFIG.name,
+    });
+  }
 });

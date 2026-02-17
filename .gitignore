@@ -1,0 +1,21 @@
+# Node modules (si se usa Node.js para desarrollo)
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporales
+*.tmp
+*.temp
+~$*

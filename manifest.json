@@ -2,7 +2,7 @@
   "name": "Conversor Multi-Divisa",
   "short_name": "Conversor",
   "description": "Conversor de divisas PEN, USD, ARS en tiempo real",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
