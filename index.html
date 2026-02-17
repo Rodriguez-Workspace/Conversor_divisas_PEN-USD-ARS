@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="description" content="Conversor de divisas PEN, USD, ARS en tiempo real">
+    <title>Conversor Multi-Divisa</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Conversor de Divisas</h1>
+            <button id="refreshBtn" class="refresh-btn" title="Actualizar tipos de cambio">
+                <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Última actualización -->
+        <div class="update-info">
+            <span id="lastUpdate">Cargando...</span>
+        </div>
+
+        <!-- Indicador de estado de datos -->
+        <div id="dataStatus" class="data-status">
+            <span>Cargando datos...</span>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Inputs de conversión -->
+        <div class="conversion-container">
+            <!-- Soles Peruanos -->
+            <div class="currency-input">
+                <label for="penInput">
+                    <span class="flag">🇵🇪</span>
+                    <span class="currency-name">Soles Peruanos</span>
+                </label>
+                <div class="input-wrapper">
+                    <span class="currency-code">PEN</span>
+                    <input 
+                        type="number" 
+                        id="penInput" 
+                        placeholder="0.00" 
+                        step="0.01"
+                        inputmode="decimal"
+                    >
+                </div>
+            </div>
+
+            <!-- Dólares Americanos -->
+            <div class="currency-input">
+                <label for="usdInput">
+                    <span class="flag">🇺🇸</span>
+                    <span class="currency-name">Dólares Americanos</span>
+                </label>
+                <div class="input-wrapper">
+                    <span class="currency-code">USD</span>
+                    <input 
+                        type="number" 
+                        id="usdInput" 
+                        placeholder="0.00" 
+                        step="0.01"
+                        inputmode="decimal"
+                    >
+                </div>
+            </div>
+
+            <!-- Pesos Argentinos -->
+            <div class="currency-input">
+                <label for="arsInput">
+                    <span class="flag">🇦🇷</span>
+                    <span class="currency-name">Pesos Argentinos (Blue)</span>
+                </label>
+                <div class="input-wrapper">
+                    <span class="currency-code">ARS</span>
+                    <input 
+                        type="number" 
+                        id="arsInput" 
+                        placeholder="0.00" 
+                        step="0.01"
+                        inputmode="decimal"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen de tasas (obligatorio y lineal) -->
+        <div class="rates-summary">
+            <div class="rate-display">
+                <span id="rateDisplay">Cargando tasas...</span>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Datos de <strong>SUNAT</strong> y <strong>DolarAPI</strong></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
