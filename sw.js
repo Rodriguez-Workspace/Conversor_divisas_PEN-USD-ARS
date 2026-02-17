@@ -1,4 +1,4 @@
-const CACHE_NAME = 'conversor-v5';
+const CACHE_NAME = 'conversor-v6';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -57,13 +57,12 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Estrategia Network First para APIs externas
+    // NO interceptar APIs externas - dejar que el navegador las maneje directamente
     if (url.origin !== location.origin) {
-        event.respondWith(networkFirst(request));
-        return;
+        return; // No hacer nada, dejar que fetch normal funcione
     }
 
-    // Estrategia Cache First para recursos locales
+    // Estrategia Cache First solo para recursos locales
     event.respondWith(cacheFirst(request));
 });
 
@@ -91,31 +90,6 @@ async function cacheFirst(request) {
         // Si falla todo, devolver página offline básica
         if (request.destination === 'document') {
             return cache.match('/index.html');
-        }
-        
-        throw error;
-    }
-}
-
-// Estrategia Network First (para APIs)
-async function networkFirst(request) {
-    try {
-        const response = await fetch(request);
-        
-        // Cachear la respuesta de la API para uso offline
-        if (response.status === 200) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, response.clone());
-        }
-        
-        return response;
-    } catch (error) {
-        // Si falla la red, intentar desde caché
-        const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(request);
-        
-        if (cached) {
-            return cached;
         }
         
         throw error;
